@@ -13,6 +13,8 @@ class MyMainWindow(QMainWindow):
 
         self.canvas.connect(self.sideBar, SIGNAL("getAllColors(list())"), self.canvas.getAllColors)
         self.canvas.connect(self.sideBar, SIGNAL("setHighlightColor(QColor)"), self.canvas.setHighlightColor)
+        self.canvas.connect(self.sideBar, SIGNAL("setTran(float)"), self.canvas.setTran)
+        self.canvas.connect(self.sideBar, SIGNAL("onUndo()"), self.canvas.onUndo)
 
         openFileAct = QAction("Abrir Foto", self)
         openFileAct.triggered.connect(self.canvas.onFileOpen)
@@ -30,7 +32,6 @@ class MyMainWindow(QMainWindow):
         toolbar.addAction(openFileAct)
         toolbar.addAction(saveFileAct)
         toolbar.addAction(exportBinaryAct)
-        toolbar.addSeparator()
         toolbar.addAction(removeBackgroudAct)
 
         toolbar.setMovable(False)
