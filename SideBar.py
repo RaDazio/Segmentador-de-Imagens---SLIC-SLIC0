@@ -1,5 +1,5 @@
-from PySide2.QtWidgets import QVBoxLayout, QWidget, QColorDialog, QPushButton, QRadioButton,QHBoxLayout, QLineEdit, QLabel, QCheckBox
-from PySide2.QtCore import Slot, SIGNAL
+from PySide2.QtWidgets import QVBoxLayout, QWidget, QColorDialog, QPushButton, QRadioButton,QHBoxLayout, QLineEdit, QLabel, QCheckBox, QSlider, QGridLayout
+from PySide2.QtCore import Slot, Qt, SIGNAL
 from PySide2.QtGui import QPixmap, QColor, QIcon
 
 
@@ -12,6 +12,15 @@ class SideBar(QWidget):
         self.prinlayout = QVBoxLayout(self)
         self.seclayout = QVBoxLayout(self)
         self.headerlayout = QVBoxLayout(self)
+        self.footerlayout = QVBoxLayout(self)
+
+        self.tranSlider = QSlider(orientation=Qt.Horizontal)
+        self.tranSlider.setMinimum(0)
+        self.tranSlider.setValue(50)
+        self.tranSlider.setMaximum(100)
+        self.tranSlider.sliderReleased.connect(self.onTranChange)
+        tLabel = QLabel("Transparência:")
+
 
         self.classCheck = QCheckBox("Segmentar diversas classes")
         self.classCheck.clicked.connect(lambda: self.enableClasses(self.classCheck.isChecked()))
@@ -23,10 +32,16 @@ class SideBar(QWidget):
         self.colorList = list()
         self.currColor = 0
 
+        btnUndo = QPushButton("Desfazer Tudo")
+        btnUndo.clicked.connect(self.undoAll)
+
+        self.headerlayout.addWidget(tLabel)
+        self.headerlayout.addWidget(self.tranSlider)
         self.headerlayout.addWidget(self.classCheck)
         self.prinlayout.addWidget(QLabel("Classes:"))
         self.seclayout.addWidget(btnAdd)
         self.seclayout.addStretch(1)
+        self.footerlayout.addWidget(btnUndo)
 
         self.__wid1 = QWidget()
         self.__wid1.setLayout(self.prinlayout)
@@ -38,8 +53,14 @@ class SideBar(QWidget):
         self.mainlayout.addLayout(self.headerlayout)
         self.mainlayout.addWidget(self.__wid1)
         self.mainlayout.addWidget(self.__wid2)
+        self.mainlayout.addLayout(self.footerlayout)
 
         self.setLayout(self.mainlayout)
+
+    @Slot()
+    def onTranChange(self):
+        value = self.tranSlider.value()
+        self.emit(SIGNAL("setTran(float)"), value)
 
     @Slot()
     def addColor(self):
@@ -81,6 +102,11 @@ class SideBar(QWidget):
         self.__wid1.setEnabled(cond)
         if len(self.colorList) < 14:
             self.__wid2.setEnabled(cond)
+
+    @Slot()
+    def undoAll(self):
+        self.emit(SIGNAL("onUndo()"))
+
 
 
 class ColorWidget(QWidget):
