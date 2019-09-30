@@ -274,3 +274,18 @@ class Canvas (QWidget):
     @Slot()
     def getAllColors(self, colors):
         self.__AllColors = colors
+
+    @Slot()
+    def setTran(self, value):
+        self.__transparency = 1- value/100
+
+    @Slot()
+    def onUndo(self):
+        self.thicSlider.setValue(1)
+        self.nSlider.setValue(1)
+        self.sigSlider.setValue(1)
+        self.onNsegChange()
+        self.onSigChange()
+        self.onCompChange()
+        self.__img = self.original
+        self.open_image(self.__img)
