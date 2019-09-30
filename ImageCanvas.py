@@ -12,7 +12,7 @@ class Canvas (QWidget):
     def __init__(self):
         QWidget.__init__(self)
 
-        self.file = "thumb-350-404213.jpg"
+        self.file = "mug.webp"
 
         self.__img = cv2.imread(self.file)
         self.__mask = np.zeros(1)
@@ -45,6 +45,8 @@ class Canvas (QWidget):
         self.zeroModeCheck = QCheckBox("Usar SLIC0")
 
         self.__highlightcolor = QColor(255, 255, 255)
+
+        self.__transparency = 0.5
 
         self.__AllColors = [self.__highlightcolor.toTuple()[:3]]
 
@@ -106,7 +108,9 @@ class Canvas (QWidget):
 
         self.resize_spinbox.valueChanged.connect(self.Resize)
 
-    def getBackgoud(self):
+        self.open_image(self.__img)
+
+    def getBackground(self):
         mask = self.__thirdChannelMask.copy()
         mask_r = mask[:, :, 2]
         mask_g = mask[:, :, 1]
@@ -130,8 +134,6 @@ class Canvas (QWidget):
         self.__mask = slic(self.__img, n_segments=self.__nseg, compactness=self.__comp, sigma=self.__sig, convert2lab=True, slic_zero=self.zeroModeCheck.isChecked())
 
         mask = self.__mask.copy()
-        # to_black = np.where(mask != color for color in self.__AllColors)
-        # mask[to_black] = 0
         mask = np.dstack((mask, mask, mask))
         mask = img_as_ubyte(mask)
 
@@ -167,7 +169,7 @@ class Canvas (QWidget):
         self.__label.adjustSize()
 
     @Slot()
-    def onNsegChange(self,):
+    def onNsegChange(self):
         self.__nseg = self.nSlider.value()
         self.changeImage()
 
@@ -219,7 +221,7 @@ class Canvas (QWidget):
         self.__thirdChannelMask[:, :, 1] = flood_fill(self.__thirdChannelMask[:, :, 1], (e.y(), e.x()), self.__highlightcolor.green())
         self.__thirdChannelMask[:, :, 0] = flood_fill(self.__thirdChannelMask[:, :, 0], (e.y(), e.x()), self.__highlightcolor.blue())
 
-        img = cv2.addWeighted(self.__img, 1, self.__thirdChannelMask, 0.5, 0)
+        img = cv2.addWeighted(self.__img, 1, self.__thirdChannelMask, self.__transparency, 0)
         marc_img = mark_boundaries(img, self.__mask)
         self.open_image(marc_img)
 
@@ -229,7 +231,7 @@ class Canvas (QWidget):
         diag = QFileDialog()
         file = diag.getSaveFileName()[0]
         mask = self.__thirdChannelMask.copy()
-        final = self.getBackgoud()
+        final = self.getBackground()
         b = mask[:, :, 0]
         g = mask[:, :, 1]
         r = mask[:, :, 2]
@@ -244,13 +246,13 @@ class Canvas (QWidget):
     @Slot()
     def onRemoveBackgroud(self):
         box = QMessageBox()
-        box.setText("Você deverá escolher a cor do backgroud!!")
+        box.setText("Selecione a cor do background")
         box.setIcon(QMessageBox.Information)
         box.exec()
         diag = QColorDialog()
         backColor = diag.getColor()
 
-        final = self.getBackgoud()
+        final = self.getBackground()
         b = self.__img[:, :, 0]
         g = self.__img[:, :, 1]
         r = self.__img[:, :, 2]
@@ -274,3 +276,17 @@ class Canvas (QWidget):
     @Slot()
     def getAllColors(self, colors):
         self.__AllColors = colors
+
+    @Slot()
+    def setTran(self, value):
+        self.__transparency = 1- value/100
+
+    @Slot()
+    def onUndo(self):
+        self.thicSlider.setValue(1)
+        self.nSlider.setValue(1)
+        self.sigSlider.setValue(1)
+        self.onNsegChange()
+        self.onSigChange()
+        self.onCompChange()
+        self.open_image(self.original)
